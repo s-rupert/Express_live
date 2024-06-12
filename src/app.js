@@ -1,17 +1,20 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
-
-
-
+const multer = require('multer');
+const fs = require('fs');
 const express = require('express');
 const path = require('path');
 const JOBS=require('./jobs.js'); 
 const mustacheExpress = require('mustache-express');
 
+// const fetch = require('node-fetch');
 const app = express();
+const upload = multer({ dest: 'uploads/' });
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
 
+const hCaptchaSecret = '4f3d7976-833d-4973-bae8-0745e7f920ab';
 
 app.use(express.static(path.join(__dirname,'public')));
 
@@ -32,13 +35,22 @@ app.get('/jobs/:id', (req, res) => {
     res.render('job', { job: matchedJob});
 })
 
-app.post('/jobs/:id/apply', (req, res) => {
-    console.log('req.body', req.body);
-    const { name, email, phone, dob, position, coverletter } = req.body;
 
+app.post('/jobs/:id/apply',upload.single('file'), async(req, res) => {
+    const { name, email, phone, dob, position, coverletter, 'h-captcha-response': hCaptchaResponse } = req.body;
     const id = req.params.id;
     const matchedJob = JOBS.find(job => job.id.toString() === id);
-  
+    const file=req.file;
+    const fileContent = fs.readFileSync(file.path);
+
+    if (!hCaptchaResponse) {
+      return res.status(400).send('Please complete the hCaptcha.');
+  }
+  const verificationUrl = `https://hcaptcha.com/siteverify?secret=${hCaptchaSecret}&response=${hCaptchaResponse}`;
+    const hCaptchaVerification = await fetch(verificationUrl, { method: 'POST' });
+    const hCaptchaVerificationData = await hCaptchaVerification.json();
+
+   
     const mailOptions = {
       from: process.env.EMAIL_ID,
       to: process.env.EMAIL_ID,
@@ -49,7 +61,12 @@ app.post('/jobs/:id/apply', (req, res) => {
         <p><strong>Phone:</strong> ${phone}</p>
         <p><strong>Date of Birth:</strong> ${dob}</p>
         <p><strong>Cover Letter:</strong> ${coverletter}</p>
-      `
+      `,
+      attachments:[{
+        filename: file.originalname,
+        content:fileContent,
+      },
+      ],
     };
   
     transporter.sendMail(mailOptions, (error, info) => {

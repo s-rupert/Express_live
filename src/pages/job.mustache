@@ -8,6 +8,7 @@
       name="description"
       content="Learn about job openings at Jovian and submit your application now"
     />
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
     <meta property="og:title" content="Jovian Careers" />
     <meta
       property="og:description"
@@ -120,6 +121,7 @@
           class="offset-lg-2 col-lg-8"
           action="/jobs/{{job.id}}/apply"
           method="POST"
+          enctype="multipart/form-data"
         >
           <!--NAME-->
           <div class="mb-3 col-sm-6">
@@ -177,16 +179,16 @@
           </div>
   
           <!--RESUME-->
-          <!-- <div class="mb-3 col-sm-6">
+          <div class="mb-3 col-sm-6">
             <label for="resume" class="form-label">Upload Resume</label>
             <input
               type="file"
               class="form-control"
               id="resume"
-              name="resume"
+              name="file"
               required
             />
-          </div> -->
+          </div>
   
           <!--COVER LETTER-->
           <div class="mb-3">
@@ -208,6 +210,9 @@
               >I agree to the terms and coditions.</label
             >
           </div>
+
+          <!--CAPTCHA-->
+          <div class="h-captcha" data-sitekey="4f3d7976-833d-4973-bae8-0745e7f920ab"></div>
   
           <!--SUBMIT BUTTON-->
           <button type="submit" class="btn btn-primary">
